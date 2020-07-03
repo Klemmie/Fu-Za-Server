@@ -1,8 +1,10 @@
 package co.za.turtletech.fuzaserver.rest.impl;
 
+import co.za.turtletech.fuzaserver.model.DeviceContent;
 import co.za.turtletech.fuzaserver.model.Syncing;
 import co.za.turtletech.fuzaserver.model.Video;
 import co.za.turtletech.fuzaserver.model.Watched;
+import co.za.turtletech.fuzaserver.persistance.DeviceContentRepository;
 import co.za.turtletech.fuzaserver.persistance.SyncingRepository;
 import co.za.turtletech.fuzaserver.persistance.VideoRepository;
 import co.za.turtletech.fuzaserver.persistance.WatchedRepository;
@@ -15,11 +17,14 @@ public class FuZaRepositoryImpl {
     final SyncingRepository syncingRepository;
     final VideoRepository videoRepository;
     final WatchedRepository watchedRepository;
+    final DeviceContentRepository deviceContentRepository;
 
-    public FuZaRepositoryImpl(SyncingRepository syncingRepository, VideoRepository videoRepository, WatchedRepository watchedRepository) {
+    public FuZaRepositoryImpl(SyncingRepository syncingRepository, VideoRepository videoRepository,
+                              WatchedRepository watchedRepository, DeviceContentRepository deviceContentRepository) {
         this.syncingRepository = syncingRepository;
         this.videoRepository = videoRepository;
         this.watchedRepository = watchedRepository;
+        this.deviceContentRepository = deviceContentRepository;
     }
 
     public List<Syncing> getAllUsersForCompany(String companyName) {
@@ -82,5 +87,9 @@ public class FuZaRepositoryImpl {
 
     public Video getVideoByGuid(String guid) {
         return videoRepository.findByGuid(guid);
+    }
+
+    public List<DeviceContent> getCurrentContentOnDevice(String appRegistrationId) {
+        return deviceContentRepository.findDeviceContentByAppRegistrationId(appRegistrationId);
     }
 }
