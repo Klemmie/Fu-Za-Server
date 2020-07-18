@@ -10,11 +10,11 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().authorizeRequests().anyRequest().authenticated().and().httpBasic();
+//        http.csrf().disable().authorizeRequests().anyRequest().authenticated().and().httpBasic();
     }
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication().withUser("Klemmie117").password("{noop}170593RMKlem#").roles("USER");
+//        auth.inMemoryAuthentication().withUser("Klemmie117").password("{noop}170593RMKlem#").roles("USER");
     }
 }

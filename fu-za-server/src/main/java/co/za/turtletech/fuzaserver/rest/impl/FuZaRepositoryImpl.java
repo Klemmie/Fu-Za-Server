@@ -92,4 +92,8 @@ public class FuZaRepositoryImpl {
     public List<DeviceContent> getCurrentContentOnDevice(String appRegistrationId) {
         return deviceContentRepository.findDeviceContentByAppRegistrationId(appRegistrationId);
     }
+
+    public List<Video> getVideoOnCourseAndLevel(String course, String level) {
+        return videoRepository.findAllByCourseAndLevel(course, level);
+    }
 }
