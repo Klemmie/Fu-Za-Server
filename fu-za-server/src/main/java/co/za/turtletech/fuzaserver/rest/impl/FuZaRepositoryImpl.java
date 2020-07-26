@@ -44,6 +44,7 @@ public class FuZaRepositoryImpl {
     }
 
     public Syncing saveNewUser(Syncing newUser) {
+        System.out.println("Attempt");
         Syncing userByCellNumber = getUserByCellNumber(newUser.getCellNumber());
         if (userByCellNumber != null) {
             System.out.println("User already exists");

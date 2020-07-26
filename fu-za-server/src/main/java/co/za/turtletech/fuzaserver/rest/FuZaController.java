@@ -141,6 +141,7 @@ public class FuZaController {
     @GetMapping(value = "/userDetails/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> userDetails(@PathVariable String cellNumber) {
         Syncing user = fuZaRepository.getUserByCellNumber(cellNumber);
+        logger.info("User (" + cellNumber + ") requested details");
         if (user != null)
             return ResponseEntity.status(200).body(user);
 
