@@ -4,14 +4,15 @@ import co.za.turtletech.fuzaserver.model.Syncing;
 import co.za.turtletech.fuzaserver.model.Video;
 import co.za.turtletech.fuzaserver.model.Watched;
 import co.za.turtletech.fuzaserver.rest.impl.FuZaRepositoryImpl;
+import co.za.turtletech.fuzaserver.util.GeneratePdfReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,11 +21,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -103,10 +107,15 @@ public class FuZaController {
         return null;
     }
 
-    @PostMapping(value = "/addWatched", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> addWatched(@RequestBody Watched watched) {
-        Watched updateWatchedVideos = fuZaRepository.updateWatchedVideos(watched);
-        logger.info("User (" + watched.getCellNumber() + ") watched video: " + watched.getVideoName());
+    @PostMapping(value = "/addWatched/{cellNumber}/{guid}/{watched}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> addWatched(@PathVariable String cellNumber,
+                                        @PathVariable String guid,
+                                        @PathVariable(required = false) String watched) {
+        if (watched == null)
+            watched = "true";
+
+        Watched updateWatchedVideos = fuZaRepository.updateWatchedVideos(cellNumber, guid, watched);
+        logger.info("User (" + cellNumber + ") watched video: " + guid);
         return ResponseEntity.status(201).body(updateWatchedVideos);
     }
 
@@ -127,7 +136,7 @@ public class FuZaController {
 
             if (valid) {
                 logger.info("User (" + user.getCellNumber() + ") requested video list");
-                List<Video> videoOnCourseAndLevel = fuZaRepository.getVideoOnCourseAndLevel(course, level);
+                List<Video> videoOnCourseAndLevel = fuZaRepository.getVideoOnCourseAndLevel(course, level, cellNumber);
                 return ResponseEntity.status(200).body(videoOnCourseAndLevel);
             }
             logger.error("User (" + cellNumber + ") not registered for course " + course);
@@ -147,4 +156,83 @@ public class FuZaController {
 
         return null;
     }
+
+    @GetMapping(value = "/pdfReport/{company}", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<?> watchedReport(@PathVariable String company) {
+        List<Syncing> allUsersForCompany = fuZaRepository.getAllUsersForCompany(company);
+
+        List<Watched> companyWatchList = new ArrayList<>();
+
+        for (Syncing syncing : allUsersForCompany) {
+            List<Watched> allWatchedVideosForUser = fuZaRepository.getAllWatchedVideosForUser(syncing.getCellNumber());
+            String[] courses = syncing.getRegisteredCourses().split(",");
+            for (String course : courses) {
+                List<Video> videoOnCourseAndLevel = fuZaRepository.getVideoOnCourseAndLevel(course, "1", null);
+                for (Video video : videoOnCourseAndLevel) {
+                    boolean add = true;
+                    for (Watched watched : allWatchedVideosForUser) {
+                        if (video.getName().equals(watched.getVideoName())) {
+                            companyWatchList.add(watched);
+                            add = false;
+                            break;
+                        }
+                    }
+                    if (add) {
+                        Watched watched = new Watched();
+                        watched.setVideoName(video.getName());
+                        watched.setCellNumber(syncing.getCellNumber());
+                        watched.setDate(LocalDate.now());
+                        watched.setWatched("false");
+                        companyWatchList.add(watched);
+                    }
+                }
+            }
+        }
+
+        ByteArrayInputStream bis = GeneratePdfReport.watchedReport(companyWatchList);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "filename=" + company + ".pdf");
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(bis));
+    }
+
+
+//    @GetMapping(value = "/pdfReport/{company}", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<?> watchedReport(@PathVariable String company) {
+//        List<Syncing> allUsersForCompany = fuZaRepository.getAllUsersForCompany(company);
+//
+//        List<Watched> companyWatchList = new ArrayList<>();
+//
+//        for (Syncing syncing : allUsersForCompany) {
+//            List<Watched> allWatchedVideosForUser = fuZaRepository.getAllWatchedVideosForUser(syncing.getCellNumber());
+//            String[] courses = syncing.getRegisteredCourses().split(",");
+//            for (String course : courses) {
+//                List<Video> videoOnCourseAndLevel = fuZaRepository.getVideoOnCourseAndLevel(course, "1", null);
+//                for (Video video : videoOnCourseAndLevel) {
+//                    boolean add = true;
+//                    for (Watched watched : allWatchedVideosForUser) {
+//                        if (video.getName().equals(watched.getVideoName())) {
+//                            companyWatchList.add(watched);
+//                            add = false;
+//                            break;
+//                        }
+//                    }
+//                    if (add) {
+//                        Watched watched = new Watched();
+//                        watched.setVideoName(video.getName());
+//                        watched.setCellNumber(syncing.getCellNumber());
+//                        watched.setDate(LocalDate.now());
+//                        watched.setWatched("false");
+//                        companyWatchList.add(watched);
+//                    }
+//                }
+//            }
+//        }
+//        return ResponseEntity.ok().body(companyWatchList);
+//    }
 }

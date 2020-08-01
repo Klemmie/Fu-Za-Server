@@ -8,8 +8,13 @@ import co.za.turtletech.fuzaserver.persistance.DeviceContentRepository;
 import co.za.turtletech.fuzaserver.persistance.SyncingRepository;
 import co.za.turtletech.fuzaserver.persistance.VideoRepository;
 import co.za.turtletech.fuzaserver.persistance.WatchedRepository;
+import co.za.turtletech.fuzaserver.rest.FuZaController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -44,10 +49,8 @@ public class FuZaRepositoryImpl {
     }
 
     public Syncing saveNewUser(Syncing newUser) {
-        System.out.println("Attempt");
         Syncing userByCellNumber = getUserByCellNumber(newUser.getCellNumber());
         if (userByCellNumber != null) {
-            System.out.println("User already exists");
             newUser.setCellNumber("0000000000");
             newUser.setCompanyName("*****");
             return newUser;
@@ -60,7 +63,6 @@ public class FuZaRepositoryImpl {
     public Syncing updateUser(Syncing userUpdate) {
         Syncing currentUser = getUserByCellNumber(userUpdate.getCellNumber());
         if (currentUser != null) {
-            System.out.println("User already exists");
             currentUser.setCompanyName(userUpdate.getCompanyName());
             currentUser.setCellNumber(userUpdate.getCellNumber());
             currentUser.setAppRegistrationId(userUpdate.getAppRegistrationId());
@@ -73,13 +75,43 @@ public class FuZaRepositoryImpl {
         return null;
     }
 
-    public Watched updateWatchedVideos(Watched watched) {
-        return watchedRepository.save(watched);
+    public Watched updateWatchedVideos(String cellNumber, String guid, String val) {
+        Video videoByGuid = getVideoByGuid(guid);
+        Watched watched = new Watched();
+        watched.setCellNumber(cellNumber);
+        watched.setVideoName(videoByGuid.getName());
+        watched.setWatched(val);
+        watched.setDate(LocalDate.now());
+
+        List<Watched> byCellNumber = getAllWatchedVideosForUser(cellNumber);
+        boolean save = true;
+        for (Watched storedWatched : byCellNumber) {
+            if (watched.getVideoName().equals(storedWatched.getVideoName())) {
+                save = false;
+                break;
+            }
+        }
+        if (save)
+            watchedRepository.save(watched);
+        return watched;
+    }
+
+    public List<Watched> getAllWatchedVideosForUser(String cellNumber) {
+        return watchedRepository.findByCellNumber(cellNumber);
     }
 
     public void insertNewVideoUpload(Video video) {
-        if (getVideoByName(video.getName()) == null)
+        List<Video> videoOnCourseAndLevel = getVideoOnCourseAndLevel(video.getCourse(), video.getLevel(), null);
+        int order = 0;
+        for (Video storedVideo : videoOnCourseAndLevel) {
+            if (storedVideo.getVidOrder() > order)
+                order = storedVideo.getVidOrder();
+        }
+
+        if (getVideoByName(video.getName()) == null) {
+            video.setVidOrder(order + 1);
             videoRepository.save(video);
+        }
     }
 
     public Video getVideoByName(String name) {
@@ -94,7 +126,28 @@ public class FuZaRepositoryImpl {
         return deviceContentRepository.findDeviceContentByAppRegistrationId(appRegistrationId);
     }
 
-    public List<Video> getVideoOnCourseAndLevel(String course, String level) {
-        return videoRepository.findAllByCourseAndLevel(course, level);
+    public List<Video> getVideoOnCourseAndLevel(String course, String level, String cellNumber) {
+        List<Video> allByCourseAndLevel = videoRepository.findAllByCourseAndLevel(course, level);
+        List<Video> returnVideos = new ArrayList<>();
+
+        if (cellNumber != null) {
+            List<Watched> byCellNumber = getAllWatchedVideosForUser(cellNumber);
+
+            for (Video video : allByCourseAndLevel) {
+                boolean add = true;
+                for (Watched watched : byCellNumber) {
+                    if (watched.getVideoName().equals(video.getName())) {
+                        if (watched.getWatched().equals("true"))
+                            add = false;
+                        break;
+                    }
+                }
+                if (add)
+                    returnVideos.add(video);
+            }
+
+            return returnVideos;
+        }
+        return allByCourseAndLevel;
     }
 }

@@ -9,6 +9,7 @@ public class Video {
     @Id
     private String Id;
 
+    private int vidOrder;
     private String name;
     private String path;
     private String course;
@@ -21,6 +22,14 @@ public class Video {
 
     public void setId(String id) {
         Id = id;
+    }
+
+    public int getVidOrder() {
+        return vidOrder;
+    }
+
+    public void setVidOrder(int vidOrder) {
+        this.vidOrder = vidOrder;
     }
 
     public String getName() {
@@ -61,5 +70,11 @@ public class Video {
 
     public void setGuid(String guid) {
         this.guid = guid;
+    }
+
+    @Override
+    public String toString(){
+        return "Video{vidOrder: "+vidOrder+", name: "+name+", course: "+course+", level: "+level+", guid: "+guid+", path: "+path+"}";
+
     }
 }
