@@ -1,6 +1,6 @@
 package co.za.turtletech.fuzaserver.rest;
 
-import co.za.turtletech.fuzaserver.model.Syncing;
+import co.za.turtletech.fuzaserver.model.Users;
 import co.za.turtletech.fuzaserver.model.Video;
 import co.za.turtletech.fuzaserver.model.Watched;
 import co.za.turtletech.fuzaserver.rest.impl.FuZaRepositoryImpl;
@@ -43,8 +43,8 @@ public class FuZaController {
     }
 
     @PostMapping(value = "/newUser", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> insertNewUser(@RequestBody Syncing newUser) {
-        Syncing addedUser = fuZaRepository.saveNewUser(newUser);
+    public ResponseEntity<?> insertNewUser(@RequestBody Users newUser) {
+        Users addedUser = fuZaRepository.saveNewUser(newUser);
 
         if (addedUser.getCellNumber().equals(newUser.getCellNumber())) {
             logger.info("New user " + newUser.getCellNumber() + " has been added");
@@ -55,8 +55,8 @@ public class FuZaController {
     }
 
     @PutMapping(value = "/updatedUser", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateUser(@RequestBody Syncing updatedUser) {
-        Syncing addedUser = fuZaRepository.updateUser(updatedUser);
+    public ResponseEntity<?> updateUser(@RequestBody Users updatedUser) {
+        Users addedUser = fuZaRepository.updateUser(updatedUser);
 
         if (addedUser.getCellNumber().equals(updatedUser.getCellNumber())) {
             logger.info("User " + updatedUser.getCellNumber() + " has been updated");
@@ -71,7 +71,7 @@ public class FuZaController {
                                              @PathVariable String guid) throws IOException {
         //83ffac9f-cb5b-4419-900a-d6ddb59a177b
         //a797eea9-f471-439d-a7f0-42bec9871124
-        Syncing user = fuZaRepository.getUserByCellNumber(cellNumber);
+        Users user = fuZaRepository.getUserByCellNumber(cellNumber);
         if (user != null) {
             Video videoByGuid = fuZaRepository.getVideoByGuid(guid);
             String[] courses = user.getRegisteredCourses().split(",");
@@ -119,11 +119,10 @@ public class FuZaController {
         return ResponseEntity.status(201).body(updateWatchedVideos);
     }
 
-    @GetMapping(value = "/videoList/{course}/{level}/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/videoList/{course}/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> videoList(@PathVariable String course,
-                                       @PathVariable String level,
                                        @PathVariable String cellNumber) {
-        Syncing user = fuZaRepository.getUserByCellNumber(cellNumber);
+        Users user = fuZaRepository.getUserByCellNumber(cellNumber);
         if (user != null) {
             String[] courses = user.getRegisteredCourses().split(",");
             boolean valid = false;
@@ -136,8 +135,8 @@ public class FuZaController {
 
             if (valid) {
                 logger.info("User (" + user.getCellNumber() + ") requested video list");
-                List<Video> videoOnCourseAndLevel = fuZaRepository.getVideoOnCourseAndLevel(course, level, cellNumber);
-                return ResponseEntity.status(200).body(videoOnCourseAndLevel);
+                List<Video> videoOnCourse = fuZaRepository.getVideoOnCourse(course, cellNumber);
+                return ResponseEntity.status(200).body(videoOnCourse);
             }
             logger.error("User (" + cellNumber + ") not registered for course " + course);
 
@@ -149,7 +148,7 @@ public class FuZaController {
 
     @GetMapping(value = "/userDetails/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> userDetails(@PathVariable String cellNumber) {
-        Syncing user = fuZaRepository.getUserByCellNumber(cellNumber);
+        Users user = fuZaRepository.getUserByCellNumber(cellNumber);
         logger.info("User (" + cellNumber + ") requested details");
         if (user != null)
             return ResponseEntity.status(200).body(user);
@@ -159,16 +158,16 @@ public class FuZaController {
 
     @GetMapping(value = "/pdfReport/{company}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> watchedReport(@PathVariable String company) {
-        List<Syncing> allUsersForCompany = fuZaRepository.getAllUsersForCompany(company);
+        List<Users> allUsersForCompany = fuZaRepository.getAllUsersForCompany(company);
 
         List<Watched> companyWatchList = new ArrayList<>();
 
-        for (Syncing syncing : allUsersForCompany) {
-            List<Watched> allWatchedVideosForUser = fuZaRepository.getAllWatchedVideosForUser(syncing.getCellNumber());
-            String[] courses = syncing.getRegisteredCourses().split(",");
+        for (Users users : allUsersForCompany) {
+            List<Watched> allWatchedVideosForUser = fuZaRepository.getAllWatchedVideosForUser(users.getCellNumber());
+            String[] courses = users.getRegisteredCourses().split(",");
             for (String course : courses) {
-                List<Video> videoOnCourseAndLevel = fuZaRepository.getVideoOnCourseAndLevel(course, "1", null);
-                for (Video video : videoOnCourseAndLevel) {
+                List<Video> videoOnCourse = fuZaRepository.getVideoOnCourse(course, null);
+                for (Video video : videoOnCourse) {
                     boolean add = true;
                     for (Watched watched : allWatchedVideosForUser) {
                         if (video.getName().equals(watched.getVideoName())) {
@@ -180,7 +179,7 @@ public class FuZaController {
                     if (add) {
                         Watched watched = new Watched();
                         watched.setVideoName(video.getName());
-                        watched.setCellNumber(syncing.getCellNumber());
+                        watched.setCellNumber(users.getCellNumber());
                         watched.setDate(LocalDate.now());
                         watched.setWatched("false");
                         companyWatchList.add(watched);

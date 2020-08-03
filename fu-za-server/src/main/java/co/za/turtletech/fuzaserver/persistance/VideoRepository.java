@@ -12,7 +12,7 @@ public interface VideoRepository extends MongoRepository<Video, Long> {
     @Query(value = "{'course' : ?0}", fields = "{'course' : 0}")
     List<Video> findVideoByCourse(String course);
 
-    List<Video> findAllByCourseAndLevel(String course, String level);
+    List<Video> findAllByCourse(String course);
 
     Video findVideoByName(String name);
 

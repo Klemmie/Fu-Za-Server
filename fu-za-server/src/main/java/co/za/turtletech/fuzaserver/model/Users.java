@@ -6,8 +6,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "syncing_table")
-public class Syncing {
+@Table(name = "user_table")
+public class Users {
     @Id
     private int ID;
 
@@ -17,42 +17,24 @@ public class Syncing {
     @Column(name = "cell_number")
     private String cellNumber;
 
-    @Column(name = "app_registration_id")
-    private String appRegistrationId;
-
     @Column(name = "registered_courses")
     private String registeredCourses;
 
     @Column(name = "device_type")
     private String deviceType;
 
-    @Column(name = "mongo_id")
-    private String mongoId;
-
     @Column(name = "active")
     private boolean active;
 
-    public Syncing() {
+    public Users() {
     }
 
-    public Syncing(String companyName, String cellNumber, String appRegistrationId,
-                   String registeredCourses, String deviceType, boolean active) {
+    public Users(String companyName, String cellNumber,
+                 String registeredCourses, String deviceType, boolean active) {
         this.companyName = companyName;
         this.cellNumber = cellNumber;
-        this.appRegistrationId = appRegistrationId;
         this.registeredCourses = registeredCourses;
         this.deviceType = deviceType;
-        this.active = active;
-    }
-
-    public Syncing(String companyName, String cellNumber, String appRegistrationId,
-                   String registeredCourses, String deviceType, String mongoId, boolean active) {
-        this.companyName = companyName;
-        this.cellNumber = cellNumber;
-        this.appRegistrationId = appRegistrationId;
-        this.registeredCourses = registeredCourses;
-        this.deviceType = deviceType;
-        this.mongoId = mongoId;
         this.active = active;
     }
 
@@ -80,14 +62,6 @@ public class Syncing {
         this.cellNumber = cellNumber;
     }
 
-    public String getAppRegistrationId() {
-        return appRegistrationId;
-    }
-
-    public void setAppRegistrationId(String appRegistrationId) {
-        this.appRegistrationId = appRegistrationId;
-    }
-
     public String getRegisteredCourses() {
         return registeredCourses;
     }
@@ -102,14 +76,6 @@ public class Syncing {
 
     public void setDeviceType(String deviceType) {
         this.deviceType = deviceType;
-    }
-
-    public String getMongoId() {
-        return mongoId;
-    }
-
-    public void setMongoId(String mongoId) {
-        this.mongoId = mongoId;
     }
 
     public boolean isActive() {

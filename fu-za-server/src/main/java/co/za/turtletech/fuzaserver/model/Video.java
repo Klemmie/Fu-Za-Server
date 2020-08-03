@@ -13,7 +13,6 @@ public class Video {
     private String name;
     private String path;
     private String course;
-    private String level;
     private String guid;
 
     public String getId() {
@@ -56,14 +55,6 @@ public class Video {
         this.course = course;
     }
 
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
-    }
-
     public String getGuid() {
         return guid;
     }
@@ -73,8 +64,7 @@ public class Video {
     }
 
     @Override
-    public String toString(){
-        return "Video{vidOrder: "+vidOrder+", name: "+name+", course: "+course+", level: "+level+", guid: "+guid+", path: "+path+"}";
-
+    public String toString() {
+        return "Video{vidOrder: " + vidOrder + ", name: " + name + ", course: " + course + ", guid:" + guid + ", path: " + path + " }";
     }
 }

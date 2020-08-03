@@ -26,7 +26,7 @@ public class FileWalker {
 
     public FileWalker(FuZaRepositoryImpl fuZaRepository) {
         this.fuZaRepository = fuZaRepository;
-        courses.add("C:\\test\\1\\");
+        courses.add("C:\\test\\");
     }
 
     @Scheduled(cron = "0 0/2 * * * *")
@@ -40,9 +40,8 @@ public class FileWalker {
                         String fileName = split[split.length - 1];
                         fileName = fileName.substring(0, fileName.length() - 4);
                         Video video = new Video();
-                        video.setCourse(split[split.length - 3]);
+                        video.setCourse(split[split.length - 2]);
                         video.setGuid(UUID.randomUUID().toString());
-                        video.setLevel(split[split.length - 2]);
                         video.setName(fileName);
                         video.setPath(file.toString());
                         fuZaRepository.insertNewVideoUpload(video);
