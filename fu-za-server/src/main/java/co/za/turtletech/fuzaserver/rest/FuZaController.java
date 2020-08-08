@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +55,17 @@ public class FuZaController {
         return ResponseEntity.status(409).body(addedUser);
     }
 
+    @PostMapping(value = "/bulkAdd", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> bulkInsert(@RequestBody List<Users> users){
+        for (Users user : users) {
+            Users save = fuZaRepository.saveNewUser(user);
+            if(!save.getCellNumber().equals(user.getCellNumber()))
+                return ResponseEntity.status(409).body("An error occurred");
+        }
+
+        return ResponseEntity.status(201).body("Users added");
+    }
+
     @PutMapping(value = "/updatedUser", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateUser(@RequestBody Users updatedUser) {
         Users addedUser = fuZaRepository.updateUser(updatedUser);
@@ -64,6 +76,18 @@ public class FuZaController {
         }
 
         return ResponseEntity.status(409).body(addedUser);
+    }
+
+    @GetMapping(value = "/companyNames", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getCompanyNames(){
+        return ResponseEntity.status(200).body(fuZaRepository.getAllCompanyNames());
+    }
+
+    @GetMapping(value = "/getLearnersByCompanyName/{companyName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getAllByCompanyName(@PathVariable String companyName){
+        List<Users> allUsersForCompany = fuZaRepository.getAllUsersForCompany(companyName);
+
+        return ResponseEntity.status(200).body(allUsersForCompany);
     }
 
     @GetMapping(value = "/download/{cellNumber}/{guid}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -107,16 +131,28 @@ public class FuZaController {
         return null;
     }
 
-    @PostMapping(value = "/addWatched/{cellNumber}/{guid}/{watched}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/addWatched/{cellNumber}/{guid}/{watched}/{watchedDateTime}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addWatched(@PathVariable String cellNumber,
                                         @PathVariable String guid,
-                                        @PathVariable(required = false) String watched) {
-        if (watched == null)
-            watched = "true";
+                                        @PathVariable(required = false) String watched,
+                                        @PathVariable(required = false) String watchedDateTime) {
 
-        Watched updateWatchedVideos = fuZaRepository.updateWatchedVideos(cellNumber, guid, watched);
+        Watched updateWatchedVideos = fuZaRepository.updateWatchedVideos(cellNumber, guid, watched, watchedDateTime);
         logger.info("User (" + cellNumber + ") watched video: " + guid);
         return ResponseEntity.status(201).body(updateWatchedVideos);
+    }
+
+    @GetMapping(value = "/getWatched/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getWatched(@PathVariable String cellNumber){
+        List<Watched> allWatchedVideosForUser = fuZaRepository.getAllWatchedVideosForUser(cellNumber);
+        return ResponseEntity.status(200).body(allWatchedVideosForUser);
+    }
+
+    @PostMapping(value = "/removeWatched/{cellNumber}/{guid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> removeWatched(@PathVariable String cellNumber,
+                                           @PathVariable String guid){
+        fuZaRepository.removeWatched(cellNumber, guid);
+        return ResponseEntity.status(201).body("Record removed");
     }
 
     @GetMapping(value = "/videoList/{course}/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -180,7 +216,7 @@ public class FuZaController {
                         Watched watched = new Watched();
                         watched.setVideoName(video.getName());
                         watched.setCellNumber(users.getCellNumber());
-                        watched.setDate(LocalDate.now());
+                        watched.setDate(LocalDateTime.now());
                         watched.setWatched("false");
                         companyWatchList.add(watched);
                     }

@@ -1,16 +1,16 @@
 package co.za.turtletech.fuzaserver.rest.impl;
 
-import co.za.turtletech.fuzaserver.model.DeviceContent;
 import co.za.turtletech.fuzaserver.model.Users;
 import co.za.turtletech.fuzaserver.model.Video;
 import co.za.turtletech.fuzaserver.model.Watched;
-import co.za.turtletech.fuzaserver.persistance.DeviceContentRepository;
 import co.za.turtletech.fuzaserver.persistance.UsersRepository;
 import co.za.turtletech.fuzaserver.persistance.VideoRepository;
 import co.za.turtletech.fuzaserver.persistance.WatchedRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,18 +19,26 @@ public class FuZaRepositoryImpl {
     final UsersRepository usersRepository;
     final VideoRepository videoRepository;
     final WatchedRepository watchedRepository;
-    final DeviceContentRepository deviceContentRepository;
 
     public FuZaRepositoryImpl(UsersRepository usersRepository, VideoRepository videoRepository,
-                              WatchedRepository watchedRepository, DeviceContentRepository deviceContentRepository) {
+                              WatchedRepository watchedRepository) {
         this.usersRepository = usersRepository;
         this.videoRepository = videoRepository;
         this.watchedRepository = watchedRepository;
-        this.deviceContentRepository = deviceContentRepository;
     }
 
     public List<Users> getAllUsersForCompany(String companyName) {
         return usersRepository.findAllByCompanyName(companyName);
+    }
+
+    public List<String> getAllCompanyNames() {
+        List<Users> all = usersRepository.findAll();
+        List<String> companyNames = new ArrayList<>();
+        for (Users users : all) {
+            if (!companyNames.contains(users.getCompanyName()))
+                companyNames.add(users.getCompanyName());
+        }
+        return companyNames;
     }
 
     public List<Users> getAllUsersByRegisteredCourse(String registeredCourse) {
@@ -67,13 +75,13 @@ public class FuZaRepositoryImpl {
         return null;
     }
 
-    public Watched updateWatchedVideos(String cellNumber, String guid, String val) {
+    public Watched updateWatchedVideos(String cellNumber, String guid, String val, String watchedDateTime) {
         Video videoByGuid = getVideoByGuid(guid);
         Watched watched = new Watched();
         watched.setCellNumber(cellNumber);
         watched.setVideoName(videoByGuid.getName());
-        watched.setWatched(val);
-        watched.setDate(LocalDate.now());
+        watched.setWatched((val == null) ? "true" : "false");
+        watched.setDate((watchedDateTime == null) ? LocalDateTime.now() : LocalDateTime.parse(watchedDateTime));
 
         List<Watched> byCellNumber = getAllWatchedVideosForUser(cellNumber);
         boolean save = true;
@@ -85,6 +93,17 @@ public class FuZaRepositoryImpl {
         }
         if (save)
             watchedRepository.save(watched);
+        return watched;
+    }
+
+    public Watched removeWatched(String cellNumber, String guid) {
+        Video videoByGuid = getVideoByGuid(guid);
+        Watched watched = new Watched();
+        watched.setCellNumber(cellNumber);
+        watched.setVideoName(videoByGuid.getName());
+
+        watchedRepository.delete(watched);
+
         return watched;
     }
 
@@ -112,10 +131,6 @@ public class FuZaRepositoryImpl {
 
     public Video getVideoByGuid(String guid) {
         return videoRepository.findByGuid(guid);
-    }
-
-    public List<DeviceContent> getCurrentContentOnDevice(String appRegistrationId) {
-        return deviceContentRepository.findDeviceContentByAppRegistrationId(appRegistrationId);
     }
 
     public List<Video> getVideoOnCourse(String course, String cellNumber) {

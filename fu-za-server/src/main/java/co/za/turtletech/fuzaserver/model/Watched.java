@@ -4,24 +4,14 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Document("Watched")
 public class Watched {
-    @Id
-    private String Id;
-
     private String videoName;
     private String watched;
     private String cellNumber;
-    private LocalDate date;
-
-    public String getId() {
-        return Id;
-    }
-
-    public void setId(String id) {
-        Id = id;
-    }
+    private LocalDateTime date;
 
     public String getVideoName() {
         return videoName;
@@ -47,11 +37,11 @@ public class Watched {
         this.cellNumber = cellNumber;
     }
 
-    public LocalDate getDate() {
+    public LocalDateTime getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(LocalDateTime date) {
         this.date = date;
     }
 }

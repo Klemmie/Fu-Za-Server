@@ -8,7 +8,5 @@ import java.util.List;
 
 @Document
 public interface WatchedRepository extends MongoRepository<Watched, Long> {
-    List<Watched> findById(String id);
-
     List<Watched> findByCellNumber(String cellNumber);
 }

@@ -26,7 +26,8 @@ public class FileWalker {
 
     public FileWalker(FuZaRepositoryImpl fuZaRepository) {
         this.fuZaRepository = fuZaRepository;
-        courses.add("C:\\test\\");
+        courses.add("C:\\Users\\TurtleTech Server\\Documents\\TurtleTech Projects\\Fu-Za-Server\\content\\Cat1");
+        courses.add("C:\\Users\\TurtleTech Server\\Documents\\TurtleTech Projects\\Fu-Za-Server\\content\\Cat2");
     }
 
     @Scheduled(cron = "0 0/2 * * * *")
