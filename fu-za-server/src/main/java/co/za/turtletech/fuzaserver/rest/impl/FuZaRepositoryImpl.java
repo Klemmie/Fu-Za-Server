@@ -6,6 +6,9 @@ import co.za.turtletech.fuzaserver.model.Watched;
 import co.za.turtletech.fuzaserver.persistance.UsersRepository;
 import co.za.turtletech.fuzaserver.persistance.VideoRepository;
 import co.za.turtletech.fuzaserver.persistance.WatchedRepository;
+import co.za.turtletech.fuzaserver.rest.FuZaController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -19,6 +22,7 @@ public class FuZaRepositoryImpl {
     final UsersRepository usersRepository;
     final VideoRepository videoRepository;
     final WatchedRepository watchedRepository;
+    Logger logger = LoggerFactory.getLogger(FuZaRepositoryImpl.class);
 
     public FuZaRepositoryImpl(UsersRepository usersRepository, VideoRepository videoRepository,
                               WatchedRepository watchedRepository) {
@@ -80,31 +84,36 @@ public class FuZaRepositoryImpl {
         Watched watched = new Watched();
         watched.setCellNumber(cellNumber);
         watched.setVideoName(videoByGuid.getName());
-        watched.setWatched((val == null) ? "true" : "false");
+        watched.setWatched((val == null) ? "false" : val);
         watched.setDate((watchedDateTime == null) ? LocalDateTime.now() : LocalDateTime.parse(watchedDateTime));
 
         List<Watched> byCellNumber = getAllWatchedVideosForUser(cellNumber);
         boolean save = true;
         for (Watched storedWatched : byCellNumber) {
             if (watched.getVideoName().equals(storedWatched.getVideoName())) {
-                save = false;
+                logger.info("Passed: " + watched.toString() + ". Stored: " + storedWatched.toString());
+                if (watched.getWatched().equals("true") &&
+                        !storedWatched.getWatched().equals("true")) {
+                    removeWatched(cellNumber, guid);
+                } else {
+                    save = false;
+                }
                 break;
             }
         }
-        if (save)
+        if (save) {
             watchedRepository.save(watched);
+        }
         return watched;
     }
 
-    public Watched removeWatched(String cellNumber, String guid) {
+    public void removeWatched(String cellNumber, String guid) {
         Video videoByGuid = getVideoByGuid(guid);
         Watched watched = new Watched();
         watched.setCellNumber(cellNumber);
         watched.setVideoName(videoByGuid.getName());
-
         watchedRepository.delete(watched);
 
-        return watched;
     }
 
     public List<Watched> getAllWatchedVideosForUser(String cellNumber) {

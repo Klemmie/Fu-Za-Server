@@ -8,10 +8,21 @@ import java.time.LocalDateTime;
 
 @Document("Watched")
 public class Watched {
+    @Id
+    private String id;
+
     private String videoName;
     private String watched;
     private String cellNumber;
     private LocalDateTime date;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getVideoName() {
         return videoName;
@@ -43,5 +54,10 @@ public class Watched {
 
     public void setDate(LocalDateTime date) {
         this.date = date;
+    }
+
+    @Override
+    public String toString() {
+        return "Watched{videoName: " + videoName + ", watched: " + watched + ", cellNumber: " + cellNumber + " date: " + date + "}";
     }
 }

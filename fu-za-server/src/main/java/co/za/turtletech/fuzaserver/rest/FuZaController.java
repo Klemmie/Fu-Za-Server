@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,10 +55,10 @@ public class FuZaController {
     }
 
     @PostMapping(value = "/bulkAdd", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> bulkInsert(@RequestBody List<Users> users){
+    public ResponseEntity<?> bulkInsert(@RequestBody List<Users> users) {
         for (Users user : users) {
             Users save = fuZaRepository.saveNewUser(user);
-            if(!save.getCellNumber().equals(user.getCellNumber()))
+            if (!save.getCellNumber().equals(user.getCellNumber()))
                 return ResponseEntity.status(409).body("An error occurred");
         }
 
@@ -79,12 +78,12 @@ public class FuZaController {
     }
 
     @GetMapping(value = "/companyNames", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getCompanyNames(){
+    public ResponseEntity<?> getCompanyNames() {
         return ResponseEntity.status(200).body(fuZaRepository.getAllCompanyNames());
     }
 
     @GetMapping(value = "/getLearnersByCompanyName/{companyName}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getAllByCompanyName(@PathVariable String companyName){
+    public ResponseEntity<?> getAllByCompanyName(@PathVariable String companyName) {
         List<Users> allUsersForCompany = fuZaRepository.getAllUsersForCompany(companyName);
 
         return ResponseEntity.status(200).body(allUsersForCompany);
@@ -131,11 +130,34 @@ public class FuZaController {
         return null;
     }
 
+    @GetMapping(value = "/downloadPdf/{cellNumber}/{guid}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<Resource> downloadPdf(@PathVariable String cellNumber,
+                                                @PathVariable String guid) throws ClassCastException, IOException {
+        Video videoPdf = fuZaRepository.getVideoByGuid(guid);
+
+        String filePath = videoPdf.getPath().substring(0, videoPdf.getPath().length() - 4);
+        filePath = filePath + ".pdf";
+        File file = new File(filePath);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "filename=" + videoPdf.getName() + ".pdf");
+
+        Path path = Paths.get(file.getAbsolutePath());
+        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
+
+        logger.info("PDF download link generated for user: " + cellNumber);
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(file.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
     @PostMapping(value = "/addWatched/{cellNumber}/{guid}/{watched}/{watchedDateTime}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addWatched(@PathVariable String cellNumber,
                                         @PathVariable String guid,
                                         @PathVariable(required = false) String watched,
                                         @PathVariable(required = false) String watchedDateTime) {
+        logger.info("User: " + cellNumber + " video: " + guid + " watched: " + watched + " date+time: " + watchedDateTime);
 
         Watched updateWatchedVideos = fuZaRepository.updateWatchedVideos(cellNumber, guid, watched, watchedDateTime);
         logger.info("User (" + cellNumber + ") watched video: " + guid);
@@ -143,14 +165,14 @@ public class FuZaController {
     }
 
     @GetMapping(value = "/getWatched/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getWatched(@PathVariable String cellNumber){
+    public ResponseEntity<?> getWatched(@PathVariable String cellNumber) {
         List<Watched> allWatchedVideosForUser = fuZaRepository.getAllWatchedVideosForUser(cellNumber);
         return ResponseEntity.status(200).body(allWatchedVideosForUser);
     }
 
     @PostMapping(value = "/removeWatched/{cellNumber}/{guid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> removeWatched(@PathVariable String cellNumber,
-                                           @PathVariable String guid){
+                                           @PathVariable String guid) {
         fuZaRepository.removeWatched(cellNumber, guid);
         return ResponseEntity.status(201).body("Record removed");
     }

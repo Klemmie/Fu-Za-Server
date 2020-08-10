@@ -6,12 +6,22 @@ import javax.persistence.Id;
 
 @Document("Video")
 public class Video {
+    @Id
+    private String Id;
 
     private int vidOrder;
     private String name;
     private String path;
     private String course;
     private String guid;
+
+    public String getId() {
+        return Id;
+    }
+
+    public void setId(String id) {
+        Id = id;
+    }
 
     public int getVidOrder() {
         return vidOrder;
