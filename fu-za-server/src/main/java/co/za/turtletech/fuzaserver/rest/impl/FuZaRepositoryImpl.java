@@ -1,19 +1,17 @@
 package co.za.turtletech.fuzaserver.rest.impl;
 
+import co.za.turtletech.fuzaserver.model.AdminScreenModel;
 import co.za.turtletech.fuzaserver.model.Users;
 import co.za.turtletech.fuzaserver.model.Video;
 import co.za.turtletech.fuzaserver.model.Watched;
 import co.za.turtletech.fuzaserver.persistance.UsersRepository;
 import co.za.turtletech.fuzaserver.persistance.VideoRepository;
 import co.za.turtletech.fuzaserver.persistance.WatchedRepository;
-import co.za.turtletech.fuzaserver.rest.FuZaController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,8 +105,8 @@ public class FuZaRepositoryImpl {
         return watched;
     }
 
-    public void removeWatched(String cellNumber, String guid) {
-        Video videoByGuid = getVideoByGuid(guid);
+    public void removeWatched(String cellNumber, String videoName) {
+        Video videoByGuid = getVideoByName(videoName);
         Watched watched = new Watched();
         watched.setCellNumber(cellNumber);
         watched.setVideoName(videoByGuid.getName());
@@ -165,5 +163,40 @@ public class FuZaRepositoryImpl {
             return returnVideos;
         }
         return allByCourse;
+    }
+
+    public List<AdminScreenModel> getFrontendRepresentation(String companyName) {
+        List<AdminScreenModel> returnObject = new ArrayList<>();
+        List<Users> allUsersForCompany = getAllUsersForCompany(companyName);
+        for (Users users : allUsersForCompany) {
+            List<Watched> allWatchedVideosForUser = getAllWatchedVideosForUser(users.getCellNumber());
+            List<Video> courseVideos = new ArrayList<>();
+            String[] registeredCourses = users.getRegisteredCourses().split(",");
+            for (String registeredCourse : registeredCourses) {
+                courseVideos.addAll(getVideoOnCourse(registeredCourse, null));
+            }
+
+            for (Video courseVideo : courseVideos) {
+                AdminScreenModel adminScreenModel = new AdminScreenModel();
+                adminScreenModel.setCompanyName(companyName);
+                adminScreenModel.setCellNumber(users.getCellNumber());
+                adminScreenModel.setCourse(courseVideo.getCourse());
+                adminScreenModel.setVideoName(courseVideo.getName());
+                String watched = "false";
+                String date = LocalDateTime.now().toString();
+                for (Watched watchedVideo : allWatchedVideosForUser) {
+                    if (watchedVideo.getVideoName().equals(courseVideo.getName())) {
+                        watched = "true";
+                        date = watchedVideo.getDate().toString();
+                        break;
+                    }
+                }
+                adminScreenModel.setWatched(watched);
+                adminScreenModel.setDate(date);
+                returnObject.add(adminScreenModel);
+            }
+        }
+
+        return returnObject;
     }
 }

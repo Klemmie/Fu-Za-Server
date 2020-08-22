@@ -3,7 +3,6 @@ package co.za.turtletech.fuzaserver.model;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Document("Watched")
