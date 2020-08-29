@@ -34,6 +34,8 @@ public class UserController {
     public ResponseEntity<?> insertNewUser(@PathVariable String companyName,
                                            @PathVariable String cellNumber,
                                            @PathVariable String registeredCourses) {
+        if (cellNumber.length() == 10 && cellNumber.charAt(0) == '0')
+            cellNumber = "27" + cellNumber;
         Users newUser = new Users(companyName, cellNumber, registeredCourses, "Company", true);
         Users addedUser = fuZaRepository.saveNewUser(newUser);
 
@@ -60,6 +62,9 @@ public class UserController {
     public ResponseEntity<?> updateUser(@PathVariable String companyName,
                                         @PathVariable String cellNumber,
                                         @PathVariable String registeredCourses) {
+        if (cellNumber.length() == 10 && cellNumber.charAt(0) == '0')
+            cellNumber = "27" + cellNumber;
+
         Users userByCellNumber = fuZaRepository.getUserByCellNumber(cellNumber);
         String[] courses = userByCellNumber.getRegisteredCourses().split(",");
         String[] newCourses = registeredCourses.split(",");
@@ -90,7 +95,10 @@ public class UserController {
     }
 
     @PutMapping(value = "/removeUser/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> removeUser(@PathVariable String cellNumber){
+    public ResponseEntity<?> removeUser(@PathVariable String cellNumber) {
+        if (cellNumber.length() == 10 && cellNumber.charAt(0) == '0')
+            cellNumber = "27" + cellNumber;
+
         Users userByCellNumber = fuZaRepository.getUserByCellNumber(cellNumber);
         userByCellNumber.setActive(false);
         fuZaRepository.updateUser(userByCellNumber);
@@ -100,6 +108,9 @@ public class UserController {
 
     @GetMapping(value = "/userDetails/{cellNumber}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> userDetails(@PathVariable String cellNumber) {
+        if (cellNumber.length() == 10 && cellNumber.charAt(0) == '0')
+            cellNumber = "27" + cellNumber;
+
         Users user = fuZaRepository.getUserByCellNumber(cellNumber);
         logger.info("User (" + cellNumber + ") requested details");
         if (user != null)

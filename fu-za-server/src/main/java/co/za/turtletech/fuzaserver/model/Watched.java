@@ -1,5 +1,6 @@
 package co.za.turtletech.fuzaserver.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 @Document("Watched")
 public class Watched {
     @Id
+    @JsonIgnore
     private String id;
 
     private String videoName;
