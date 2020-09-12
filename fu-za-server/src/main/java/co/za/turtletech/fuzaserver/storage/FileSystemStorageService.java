@@ -38,7 +38,6 @@ public class FileSystemStorageService implements StorageService {
         assert originalFilename != null;
         String fileType = originalFilename.substring(originalFilename.length() - 4);
         String filename = videoName + fileType;
-        System.out.println(filename);
         try {
             if (file.isEmpty()) {
                 throw new StorageException("Failed to store empty file " + filename);

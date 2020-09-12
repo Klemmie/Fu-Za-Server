@@ -1,5 +1,6 @@
 package co.za.turtletech.fuzaserver.rest;
 
+import co.za.turtletech.fuzaserver.model.Video;
 import co.za.turtletech.fuzaserver.rest.impl.FuZaRepositoryImpl;
 import co.za.turtletech.fuzaserver.storage.StorageFileNotFoundException;
 import co.za.turtletech.fuzaserver.storage.StorageService;
@@ -59,13 +60,14 @@ public class UploadController {
 
     @PostMapping(value = "/fileUpload/{course}/{videoName}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> fileUpload(@RequestParam("file") MultipartFile file,
-                             @PathVariable String course,
-                             @PathVariable String videoName) {
+                                        @PathVariable String course,
+                                        @PathVariable String videoName) {
 
         storageService.store(file, course, videoName);
-        System.out.println(file.getOriginalFilename());
-
-        return ResponseEntity.status(200).build();
+        Video retVideo = new Video();
+        retVideo.setCourse(course);
+        retVideo.setName(videoName);
+        return ResponseEntity.status(200).body(retVideo);
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)
